@@ -1,55 +1,91 @@
+name: ${APP_NAME:-basis}
+
+x-app: &app
+  image: ${APP_NAME:-basis}:latest
+  pull_policy: never
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    APP_NAME: ${APP_NAME:-basis}
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: 5432
+    POSTGRES_USER: ${POSTGRES_USER:-postgres}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    POSTGRES_DB: ${POSTGRES_DB:-basis}
+    RABBIT_HOST: rabbitmq
+    RABBIT_PORT: 5672
+    RABBIT_USER: ${RABBIT_USER:-guest}
+    RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+    RABBIT_VHOST: ${RABBIT_VHOST:-/}
+
 services:
   postgres:
     image: postgres:17
+    container_name: ${APP_NAME:-basis}-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: basis
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-basis}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d basis"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   rabbitmq:
     image: rabbitmq:4-management
+    container_name: ${APP_NAME:-basis}-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST:-/}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBIT_PORT:-5672}:5672"
+      - "${RABBIT_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  app:
-    build: .
-    environment:
-      POSTGRES_HOST: postgres
-      RABBIT_HOST: rabbitmq
-    ports:
-      - "8000:8000"
+  migrate:
+    <<: *app
+    container_name: ${APP_NAME:-basis}-migrate
+    command: ["alembic", "-c", "src/infrastructure/database/alembic/alembic.ini", "upgrade", "head"]
     depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    build: .
+    container_name: ${APP_NAME:-basis}-api
+    command: ["uvicorn", "src.web_server:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "${HTTP_PORT:-8000}:8000"
+    restart: unless-stopped
+    depends_on: &app-depends-on
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
   broker:
-    build: .
+    <<: *app
+    container_name: ${APP_NAME:-basis}-broker
     command: ["python", "-m", "src.broker"]
-    environment:
-      POSTGRES_HOST: postgres
-      RABBIT_HOST: rabbitmq
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+    restart: unless-stopped
+    depends_on: *app-depends-on
 
 volumes:
   postgres_data:
+  rabbitmq_data:

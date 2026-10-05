@@ -1,6 +1,15 @@
 ALEMBIC = uv run alembic -c src/infrastructure/database/alembic/alembic.ini
 
-.PHONY: run run-broker migrate downgrade revision test lint format
+.PHONY: up down logs run run-broker migrate downgrade revision test lint format
+
+up:
+	docker compose up --build -d
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
 
 run:
 	uv run uvicorn src.web_server:app --reload

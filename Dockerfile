@@ -10,4 +10,6 @@ RUN uv sync --frozen --no-dev
 
 COPY src ./src
 
-CMD ["sh", "-c", "alembic -c src/infrastructure/database/alembic/alembic.ini upgrade head && uvicorn src.web_server:app --host 0.0.0.0 --port 8000"]
+EXPOSE 8000
+
+CMD ["uvicorn", "src.web_server:app", "--host", "0.0.0.0", "--port", "8000"]
