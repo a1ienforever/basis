@@ -2,11 +2,18 @@ from logging.config import dictConfig
 
 from src.config import LogSettings
 
-# Loggers that ship their own handlers/formatters; routed to the root handler instead.
+# Логгеры со своими обработчиками и форматтерами; перенаправляются в корневой обработчик.
 THIRD_PARTY_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access", "sqlalchemy.engine", "alembic")
 
 
 def setup_logging(settings: LogSettings) -> None:
+    """Настроить логирование приложения.
+
+    Весь вывод, включая сторонние логгеры, идёт в stdout в едином формате.
+
+    Args:
+        settings: настройки логирования.
+    """
     dictConfig(
         {
             "version": 1,

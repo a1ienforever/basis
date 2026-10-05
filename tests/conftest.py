@@ -11,17 +11,19 @@ from tests.fakes import FakeEventPublisher, FakeUnitOfWork
 
 @pytest.fixture
 def uow() -> FakeUnitOfWork:
+    """In-memory UoW."""
     return FakeUnitOfWork()
 
 
 @pytest.fixture
 def publisher() -> FakeEventPublisher:
+    """In-memory издатель событий."""
     return FakeEventPublisher()
 
 
 @pytest.fixture
 def app(uow: FakeUnitOfWork, publisher: FakeEventPublisher) -> FastAPI:
-    """Real app with infrastructure replaced by in-memory fakes (no Postgres/RabbitMQ needed)."""
+    """Реальное приложение с инфраструктурой, заменённой in-memory фейками."""
     app = create_app()
     app.dependency_overrides.update(
         {
@@ -34,5 +36,6 @@ def app(uow: FakeUnitOfWork, publisher: FakeEventPublisher) -> FastAPI:
 
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+    """HTTP-клиент, обращающийся к приложению напрямую через ASGI."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client

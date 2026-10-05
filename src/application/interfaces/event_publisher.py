@@ -4,4 +4,12 @@ from src.application.dto import MessageDTO
 
 
 class EventPublisher(Protocol):
-    async def publish(self, message: MessageDTO) -> None: ...
+    """Интерфейс публикации событий в брокер сообщений."""
+
+    async def publish(self, message: MessageDTO) -> None:
+        """Опубликовать сообщение в его очередь.
+
+        Args:
+            message: сообщение для публикации.
+        """
+        ...

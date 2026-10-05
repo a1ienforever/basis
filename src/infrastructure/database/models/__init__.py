@@ -1,1 +1,3 @@
-"""Import every ORM model here so that Alembic autogenerate sees it in Base.metadata."""
+from src.infrastructure.database.models.payment import PaymentModel
+
+__all__ = ["PaymentModel"]

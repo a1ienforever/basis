@@ -4,6 +4,10 @@ from typing import ClassVar
 
 @dataclass(frozen=True, slots=True)
 class MessageDTO:
-    """Base class for outgoing broker messages; `queue` is the destination queue."""
+    """Базовый класс исходящих сообщений брокера.
+
+    Attributes:
+        queue: имя очереди, в которую публикуется сообщение.
+    """
 
     queue: ClassVar[str]

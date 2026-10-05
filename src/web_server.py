@@ -11,11 +11,20 @@ from src.presentation.http.api.exception_handlers import register_exception_hand
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    """Создать HTTP-приложение FastAPI.
+
+    Args:
+        settings: настройки приложения; по умолчанию берутся из окружения.
+
+    Returns:
+        Сконфигурированное приложение FastAPI.
+    """
     settings = settings or get_settings()
     container = create_container(settings)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        """Запустить брокер на старте и освободить ресурсы при остановке."""
         await container.broker.start()
         try:
             yield

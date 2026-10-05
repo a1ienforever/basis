@@ -10,17 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
-    """
-    Реализация Unit of Work для SQLAlchemy.
+    """Реализация Unit of Work для SQLAlchemy.
 
     Предоставляет доступ к репозиториям и управляет транзакциями через сессию.
     """
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
-        """
-        Инициализация UoW.
+        """Инициализация UoW.
 
-        Аргументы:
+        Args:
             session_factory: фабрика сессий SQLAlchemy.
         """
         self._session_factory = session_factory
@@ -28,7 +26,11 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
         self._repositories: dict[str, Any] = {}
 
     async def __aenter__(self) -> "SQLAlchemyUnitOfWork":
-        """Вход в контекст: создаём сессию и репозитории."""
+        """Войти в контекст: создать сессию и зарегистрировать репозитории.
+
+        Returns:
+            Текущий экземпляр UoW.
+        """
         try:
             self._session = self._session_factory()
             self._register_repositories()
@@ -38,7 +40,15 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
             raise
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Выход из контекста: при ошибке откат, иначе коммит."""
+        """Выйти из контекста: при ошибке откатить транзакцию, иначе зафиксировать.
+
+        Сессия закрывается в любом случае.
+
+        Args:
+            exc_type: тип исключения, если оно возникло в контексте.
+            exc_val: экземпляр исключения, если оно возникло в контексте.
+            exc_tb: трассировка исключения, если оно возникло в контексте.
+        """
         try:
             if exc_type is None:
                 await self.commit()
@@ -71,6 +81,18 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
             raise
 
     def repository(self, name: str) -> Any:
+        """Получить репозиторий по имени.
+
+        Args:
+            name: имя, под которым репозиторий зарегистрирован в UoW.
+
+        Returns:
+            Экземпляр репозитория.
+
+        Raises:
+            DatabaseRepositoryNotFoundError: репозиторий с таким именем
+                не зарегистрирован.
+        """
         if name not in self._repositories:
             logger.error(
                 "UOW: репозиторий не найден: %s. Доступные: %s", name, self._repositories.keys()
@@ -79,7 +101,7 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
         return self._repositories[name]
 
     def _register_repositories(self) -> None:
-        """Метод для регистрации репозиториев - переопределяется в наследниках."""
+        """Зарегистрировать репозитории; переопределяется в наследниках."""
         pass
 
 
@@ -87,5 +109,6 @@ class AppUnitOfWork(SQLAlchemyUnitOfWork):
     """UoW сервиса: регистрирует репозитории приложения."""
 
     def _register_repositories(self) -> None:
+        """Зарегистрировать репозитории приложения."""
         # self._repositories["users"] = UserRepository(self._session)
         pass

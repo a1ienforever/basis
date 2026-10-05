@@ -17,6 +17,7 @@ database_url = settings.postgres.url
 
 
 def run_migrations_offline() -> None:
+    """Выполнить миграции в offline-режиме: сгенерировать SQL без подключения к БД."""
     context.configure(
         url=database_url.render_as_string(hide_password=False),
         target_metadata=target_metadata,
@@ -30,6 +31,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    """Выполнить миграции на переданном соединении.
+
+    Args:
+        connection: синхронное соединение с БД.
+    """
     context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
 
     with context.begin_transaction():
@@ -37,6 +43,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_migrations_online() -> None:
+    """Выполнить миграции в online-режиме: подключиться к БД и применить их."""
     engine = create_async_engine(database_url, poolclass=pool.NullPool)
 
     async with engine.connect() as connection:

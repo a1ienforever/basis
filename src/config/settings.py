@@ -8,6 +8,16 @@ from src.config.rabbit import RabbitSettings
 
 
 class Settings(BaseSettings):
+    """Настройки приложения, загружаемые из переменных окружения и `.env`.
+
+    Attributes:
+        app_name: имя приложения.
+        debug: режим отладки.
+        postgres: настройки подключения к PostgreSQL.
+        rabbit: настройки подключения к RabbitMQ.
+        log: настройки логирования.
+    """
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_nested_delimiter="_",
@@ -23,4 +33,11 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Получить настройки приложения.
+
+    Результат кэшируется: настройки читаются один раз за время жизни процесса.
+
+    Returns:
+        Настройки приложения.
+    """
     return Settings()

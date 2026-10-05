@@ -12,6 +12,14 @@ logger = logging.getLogger("broker.app")
 
 
 def create_app(settings: Settings | None = None) -> FastStream:
+    """Создать приложение FastStream с подписчиками RabbitMQ.
+
+    Args:
+        settings: настройки приложения; по умолчанию берутся из окружения.
+
+    Returns:
+        Сконфигурированное приложение FastStream.
+    """
     settings = settings or get_settings()
     container = create_container(settings)
 

@@ -11,4 +11,10 @@ NAMING_CONVENTION = {
 
 
 class Base(DeclarativeBase):
+    """Базовый класс ORM-моделей.
+
+    Attributes:
+        metadata: метаданные с единым соглашением об именовании ограничений.
+    """
+
     metadata = MetaData(naming_convention=NAMING_CONVENTION)

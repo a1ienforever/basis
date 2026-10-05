@@ -16,12 +16,28 @@ from src.presentation import dependencies as deps
 
 @dataclass(frozen=True, slots=True)
 class Container:
+    """Контейнер инфраструктурных зависимостей приложения.
+
+    Attributes:
+        engine: движок SQLAlchemy.
+        broker: брокер RabbitMQ.
+        providers: соответствие заглушек зависимостей их реализациям.
+    """
+
     engine: AsyncEngine
     broker: RabbitBroker
     providers: dict[Callable[..., Any], Callable[..., Any]]
 
 
 def create_container(settings: Settings) -> Container:
+    """Собрать контейнер зависимостей.
+
+    Args:
+        settings: настройки приложения.
+
+    Returns:
+        Контейнер с движком БД, брокером и провайдерами зависимостей.
+    """
     engine = create_engine(settings.postgres.url, echo=settings.debug)
     session_factory = create_session_factory(engine)
 
@@ -29,9 +45,11 @@ def create_container(settings: Settings) -> Container:
     publisher = RabbitEventPublisher(broker)
 
     def get_uow() -> UnitOfWork:
+        """Создать новый UoW на общей фабрике сессий."""
         return AppUnitOfWork(session_factory)
 
     def get_event_publisher() -> EventPublisher:
+        """Вернуть общий издатель событий."""
         return publisher
 
     providers: dict[Callable[..., Any], Callable[..., Any]] = {

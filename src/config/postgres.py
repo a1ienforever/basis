@@ -3,6 +3,16 @@ from sqlalchemy import URL
 
 
 class PostgresSettings(BaseModel):
+    """Настройки подключения к PostgreSQL.
+
+    Attributes:
+        host: хост сервера БД.
+        port: порт сервера БД.
+        user: имя пользователя.
+        password: пароль пользователя.
+        db: имя базы данных.
+    """
+
     host: str = "localhost"
     port: int = 5432
     user: str = "postgres"
@@ -11,6 +21,11 @@ class PostgresSettings(BaseModel):
 
     @property
     def url(self) -> URL:
+        """Собрать URL подключения для драйвера asyncpg.
+
+        Returns:
+            URL подключения SQLAlchemy.
+        """
         return URL.create(
             drivername="postgresql+asyncpg",
             username=self.user,
