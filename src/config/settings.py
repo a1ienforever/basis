@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.config.auth import AuthSettings
 from src.config.consumer import ConsumerSettings
 from src.config.gateway import GatewaySettings
 from src.config.log import LogSettings
@@ -16,6 +17,7 @@ class Settings(BaseSettings):
     Attributes:
         app_name: имя приложения.
         debug: режим отладки.
+        auth: настройки аутентификации HTTP API.
         postgres: настройки подключения к PostgreSQL.
         rabbit: настройки подключения к RabbitMQ.
         outbox: настройки relay сообщений outbox.
@@ -33,6 +35,7 @@ class Settings(BaseSettings):
 
     app_name: str = "basis"
     debug: bool = False
+    auth: AuthSettings = AuthSettings()
     postgres: PostgresSettings = PostgresSettings()
     rabbit: RabbitSettings = RabbitSettings()
     outbox: OutboxSettings = OutboxSettings()

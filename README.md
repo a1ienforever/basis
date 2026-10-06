@@ -25,6 +25,15 @@ make down
 `<APP_NAME>-api`, `<APP_NAME>-broker`, `<APP_NAME>-migrate`, `<APP_NAME>-postgres`, `<APP_NAME>-rabbitmq`.
 Порты на хосте — `HTTP_PORT`, `POSTGRES_PORT`, `RABBIT_PORT`, `RABBIT_MANAGEMENT_PORT`.
 
+## Аутентификация
+
+Все эндпоинты `/api/v1/*` требуют статический ключ из `AUTH_API_KEY` в заголовке `X-API-Key`;
+без него или с неверным ключом возвращается `401`. `/health`, `/docs` и `/openapi.json` открыты.
+
+```bash
+curl -H "X-API-Key: $AUTH_API_KEY" localhost:8000/api/v1/payments/<payment_id>
+```
+
 ## Обработка платежей
 
 Процесс `broker` читает очередь `RABBIT_QUEUE`: проводит платёж через эмулятор шлюза

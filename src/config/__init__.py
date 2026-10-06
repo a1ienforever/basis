@@ -1,3 +1,4 @@
+from src.config.auth import AuthSettings
 from src.config.consumer import ConsumerSettings
 from src.config.gateway import GatewaySettings
 from src.config.log import LogSettings
@@ -7,6 +8,7 @@ from src.config.rabbit import RabbitSettings
 from src.config.settings import Settings, get_settings
 
 __all__ = [
+    "AuthSettings",
     "ConsumerSettings",
     "GatewaySettings",
     "LogSettings",
