@@ -87,3 +87,20 @@ class PaymentAlreadyProcessedError(DomainError):
         super().__init__(f"Payment '{payment_id}' is already processed with status '{status}'")
         self.payment_id = payment_id
         self.status = status
+
+
+class PaymentAlreadyExistsError(DomainError):
+    """Платёж с таким ключом идемпотентности уже существует.
+
+    Attributes:
+        idempotency_key: ключ идемпотентности платежа.
+    """
+
+    def __init__(self, idempotency_key: str) -> None:
+        """Инициализация ошибки.
+
+        Args:
+            idempotency_key: ключ идемпотентности платежа.
+        """
+        super().__init__(f"Payment with idempotency key '{idempotency_key}' already exists")
+        self.idempotency_key = idempotency_key

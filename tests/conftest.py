@@ -6,13 +6,18 @@ from httpx import ASGITransport, AsyncClient
 
 from src.presentation import dependencies as deps
 from src.web_server import create_app
-from tests.fakes import FakeEventPublisher, FakeUnitOfWork
+from tests.fakes import (
+    FakeEventPublisher,
+    FakeOutboxRepository,
+    FakePaymentRepository,
+    FakeUnitOfWork,
+)
 
 
 @pytest.fixture
 def uow() -> FakeUnitOfWork:
-    """In-memory UoW."""
-    return FakeUnitOfWork()
+    """In-memory UoW с репозиториями платежей и outbox."""
+    return FakeUnitOfWork({"payments": FakePaymentRepository(), "outbox": FakeOutboxRepository()})
 
 
 @pytest.fixture

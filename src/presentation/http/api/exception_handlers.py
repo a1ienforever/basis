@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import DomainError
+from src.domain.exceptions import DomainError, PaymentAlreadyExistsError
 
-STATUS_CODES: dict[type[DomainError], int] = {}
+STATUS_CODES: dict[type[DomainError], int] = {
+    PaymentAlreadyExistsError: status.HTTP_409_CONFLICT,
+}
 
 
 async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.application.interfaces import UnitOfWork
 from src.infrastructure.exceptions import DatabaseRepositoryNotFoundError
+from src.infrastructure.repositories import SQLAlchemyOutboxRepository, SQLAlchemyPaymentRepository
 
 logger = logging.getLogger(__name__)
 
@@ -110,5 +111,5 @@ class AppUnitOfWork(SQLAlchemyUnitOfWork):
 
     def _register_repositories(self) -> None:
         """Зарегистрировать репозитории приложения."""
-        # self._repositories["users"] = UserRepository(self._session)
-        pass
+        self._repositories["payments"] = SQLAlchemyPaymentRepository(self._session)
+        self._repositories["outbox"] = SQLAlchemyOutboxRepository(self._session)

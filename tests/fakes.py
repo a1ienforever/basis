@@ -1,7 +1,77 @@
+from dataclasses import replace
+from datetime import UTC, datetime
 from typing import Any, Self
+from uuid import UUID
 
 from src.application.dto import MessageDTO
 from src.application.interfaces import UnitOfWork
+from src.domain.entities import Payment
+from src.domain.exceptions import PaymentAlreadyExistsError
+from src.domain.value_objects import IdempotencyKey
+
+
+class FakePaymentRepository:
+    """In-memory репозиторий платежей для тестов.
+
+    Attributes:
+        payments: сохранённые платежи по ключу идемпотентности.
+    """
+
+    def __init__(self) -> None:
+        """Инициализация репозитория."""
+        self.payments: dict[str, Payment] = {}
+
+    async def get_by_idempotency_key(self, idempotency_key: IdempotencyKey) -> Payment | None:
+        """Найти платёж по ключу идемпотентности.
+
+        Args:
+            idempotency_key: ключ идемпотентности платежа.
+
+        Returns:
+            Платёж или `None`, если платежа с таким ключом нет.
+        """
+        return self.payments.get(idempotency_key)
+
+    async def add(self, payment: Payment) -> Payment:
+        """Сохранить платёж, проставив дату создания.
+
+        Args:
+            payment: платёж для сохранения.
+
+        Returns:
+            Сохранённый платёж с датой создания.
+
+        Raises:
+            PaymentAlreadyExistsError: платёж с таким ключом идемпотентности
+                уже существует.
+        """
+        if payment.idempotency_key in self.payments:
+            raise PaymentAlreadyExistsError(payment.idempotency_key)
+        saved = replace(payment, created_at=datetime.now(UTC))
+        self.payments[saved.idempotency_key] = saved
+        return saved
+
+
+class FakeOutboxRepository:
+    """In-memory репозиторий outbox для тестов.
+
+    Attributes:
+        messages: сохранённые сообщения с идентификаторами их агрегатов и очередями.
+    """
+
+    def __init__(self) -> None:
+        """Инициализация репозитория."""
+        self.messages: list[tuple[UUID, str, MessageDTO]] = []
+
+    async def add(self, aggregate_id: UUID, queue: str, message: MessageDTO) -> None:
+        """Сохранить сообщение в памяти.
+
+        Args:
+            aggregate_id: идентификатор агрегата, к которому относится сообщение.
+            queue: имя очереди, в которую сообщение будет опубликовано.
+            message: сообщение для отправки.
+        """
+        self.messages.append((aggregate_id, queue, message))
 
 
 class FakeUnitOfWork(UnitOfWork):
