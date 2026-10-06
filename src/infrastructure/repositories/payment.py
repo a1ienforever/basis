@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,18 @@ class SQLAlchemyPaymentRepository:
             session: сессия SQLAlchemy текущей единицы работы.
         """
         self._session = session
+
+    async def get_by_id(self, payment_id: UUID) -> Payment | None:
+        """Найти платёж по идентификатору.
+
+        Args:
+            payment_id: идентификатор платежа.
+
+        Returns:
+            Платёж или `None`, если платежа с таким идентификатором нет.
+        """
+        model = await self._session.get(PaymentModel, payment_id)
+        return model.to_entity() if model is not None else None
 
     async def get_by_idempotency_key(self, idempotency_key: IdempotencyKey) -> Payment | None:
         """Найти платёж по ключу идемпотентности.

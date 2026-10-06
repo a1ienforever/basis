@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import DomainError, PaymentAlreadyExistsError
+from src.domain.exceptions import DomainError, PaymentAlreadyExistsError, PaymentNotFoundError
 
 STATUS_CODES: dict[type[DomainError], int] = {
     PaymentAlreadyExistsError: status.HTTP_409_CONFLICT,
+    PaymentNotFoundError: status.HTTP_404_NOT_FOUND,
 }
 
 

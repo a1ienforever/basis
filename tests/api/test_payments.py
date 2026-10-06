@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from httpx import AsyncClient
 
@@ -31,5 +31,37 @@ async def test_create_payment_is_accepted(client: AsyncClient, uow: FakeUnitOfWo
 
 async def test_missing_idempotency_key_is_rejected(client: AsyncClient) -> None:
     response = await client.post(URL, json=BODY)
+
+    assert response.status_code == 422
+
+
+async def test_get_payment_returns_details(client: AsyncClient) -> None:
+    created = (await client.post(URL, json=BODY, headers=HEADERS)).json()
+
+    response = await client.get(f"{URL}/{created['payment_id']}")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "payment_id": created["payment_id"],
+        "amount": "100.50",
+        "currency": "RUB",
+        "description": "Оплата заказа №42",
+        "metadata": {"order_id": 42},
+        "status": "pending",
+        "idempotency_key": "order-42",
+        "webhook_url": "https://example.com/hook",
+        "created_at": created["created_at"],
+        "processed_at": None,
+    }
+
+
+async def test_get_unknown_payment_returns_404(client: AsyncClient) -> None:
+    response = await client.get(f"{URL}/{uuid4()}")
+
+    assert response.status_code == 404
+
+
+async def test_get_payment_with_invalid_id_is_rejected(client: AsyncClient) -> None:
+    response = await client.get(f"{URL}/not-a-uuid")
 
     assert response.status_code == 422

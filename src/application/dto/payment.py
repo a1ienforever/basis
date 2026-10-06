@@ -44,6 +44,36 @@ class PaymentDTO:
     created_at: datetime
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PaymentDetailsDTO:
+    """Детальная информация о платеже.
+
+    Attributes:
+        id: уникальный идентификатор платежа.
+        amount: сумма платежа.
+        currency: валюта платежа.
+        description: описание платежа.
+        metadata: произвольная дополнительная информация.
+        status: текущий статус платежа.
+        idempotency_key: ключ идемпотентности, переданный клиентом.
+        webhook_url: адрес для уведомления о результате.
+        created_at: дата и время создания платежа.
+        processed_at: дата и время обработки платежа; `None`, пока платёж
+            не обработан.
+    """
+
+    id: UUID
+    amount: Decimal
+    currency: Currency
+    description: str
+    metadata: dict[str, Any]
+    status: PaymentStatus
+    idempotency_key: str
+    webhook_url: str
+    created_at: datetime
+    processed_at: datetime | None
+
+
 @dataclass(frozen=True, slots=True)
 class PaymentCreatedMessage(MessageDTO):
     """Сообщение о создании платежа, ожидающего обработки.

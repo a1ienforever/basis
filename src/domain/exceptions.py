@@ -104,3 +104,20 @@ class PaymentAlreadyExistsError(DomainError):
         """
         super().__init__(f"Payment with idempotency key '{idempotency_key}' already exists")
         self.idempotency_key = idempotency_key
+
+
+class PaymentNotFoundError(DomainError):
+    """Платёж с таким идентификатором не найден.
+
+    Attributes:
+        payment_id: идентификатор платежа.
+    """
+
+    def __init__(self, payment_id: object) -> None:
+        """Инициализация ошибки.
+
+        Args:
+            payment_id: идентификатор платежа.
+        """
+        super().__init__(f"Payment '{payment_id}' not found")
+        self.payment_id = payment_id

@@ -22,6 +22,17 @@ class FakePaymentRepository:
         """Инициализация репозитория."""
         self.payments: dict[str, Payment] = {}
 
+    async def get_by_id(self, payment_id: UUID) -> Payment | None:
+        """Найти платёж по идентификатору.
+
+        Args:
+            payment_id: идентификатор платежа.
+
+        Returns:
+            Платёж или `None`, если платежа с таким идентификатором нет.
+        """
+        return next((p for p in self.payments.values() if p.id == payment_id), None)
+
     async def get_by_idempotency_key(self, idempotency_key: IdempotencyKey) -> Payment | None:
         """Найти платёж по ключу идемпотентности.
 
