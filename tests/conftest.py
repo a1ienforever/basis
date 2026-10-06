@@ -8,6 +8,7 @@ from src.presentation import dependencies as deps
 from src.web_server import create_app
 from tests.fakes import (
     FakeEventPublisher,
+    FakeInboxRepository,
     FakeOutboxRepository,
     FakePaymentRepository,
     FakeUnitOfWork,
@@ -16,8 +17,14 @@ from tests.fakes import (
 
 @pytest.fixture
 def uow() -> FakeUnitOfWork:
-    """In-memory UoW с репозиториями платежей и outbox."""
-    return FakeUnitOfWork({"payments": FakePaymentRepository(), "outbox": FakeOutboxRepository()})
+    """In-memory UoW с репозиториями платежей, outbox и inbox."""
+    return FakeUnitOfWork(
+        {
+            "payments": FakePaymentRepository(),
+            "outbox": FakeOutboxRepository(),
+            "inbox": FakeInboxRepository(),
+        }
+    )
 
 
 @pytest.fixture

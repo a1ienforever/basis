@@ -4,11 +4,12 @@ from typing import Any, Self
 from uuid import UUID
 
 from src.application.dto import MessageDTO
+from src.application.exceptions import InboxMessageAlreadyExistsError
 from src.application.interfaces import UnitOfWork
 from src.domain.entities import Payment
 from src.domain.exceptions import PaymentAlreadyExistsError
 from src.domain.value_objects import IdempotencyKey
-from src.infrastructure.database.models import OutboxMessageModel, OutboxStatus
+from src.infrastructure.database.models import InboxMessageModel, OutboxMessageModel, OutboxStatus
 
 
 class FakePaymentRepository:
@@ -97,6 +98,35 @@ class FakeOutboxRepository:
             Строки в статусе `pending` в порядке добавления.
         """
         return [row for row in self.rows if row.status is OutboxStatus.PENDING][:limit]
+
+
+class FakeInboxRepository:
+    """In-memory репозиторий inbox для тестов.
+
+    Attributes:
+        rows: обработанные сообщения по паре потребителя и идентификатора.
+    """
+
+    def __init__(self) -> None:
+        """Инициализация репозитория."""
+        self.rows: dict[tuple[str, UUID], InboxMessageModel] = {}
+
+    async def create(self, consumer: str, message_id: UUID) -> None:
+        """Сохранить сообщение в памяти.
+
+        Args:
+            consumer: имя потребителя, обработавшего сообщение.
+            message_id: идентификатор сообщения в outbox отправителя.
+
+        Raises:
+            InboxMessageAlreadyExistsError: сообщение уже сохранено
+                этим потребителем.
+        """
+        if (consumer, message_id) in self.rows:
+            raise InboxMessageAlreadyExistsError(consumer, message_id)
+        self.rows[consumer, message_id] = InboxMessageModel(
+            consumer=consumer, message_id=message_id, processed_at=datetime.now(UTC)
+        )
 
 
 class FakeUnitOfWork(UnitOfWork):
