@@ -44,3 +44,11 @@ class PaymentRepository(Protocol):
                 уже существует.
         """
         ...
+
+    async def update(self, payment: Payment) -> None:
+        """Сохранить изменения существующего платежа.
+
+        Args:
+            payment: платёж с изменёнными данными.
+        """
+        ...

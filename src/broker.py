@@ -24,7 +24,7 @@ def create_app(settings: Settings | None = None) -> FastStream:
     settings = settings or get_settings()
     container = create_container(settings)
 
-    setup_routers(container.broker)
+    setup_routers(container.broker, container.topology.queue, container.topology.exchange)
     for stub, provider in container.providers.items():
         container.broker.provider.override(stub, provider)
 
@@ -61,8 +61,9 @@ def setup_lifecycle(app: FastStream, container: Container) -> None:
         await asyncio.gather(*relay_tasks)
 
     @app.after_shutdown
-    async def dispose_engine() -> None:
-        """Закрыть пул соединений с БД после остановки брокера."""
+    async def release_resources() -> None:
+        """Закрыть HTTP-клиент и пул соединений с БД после остановки брокера."""
+        await container.http_client.aclose()
         await container.engine.dispose()
 
 

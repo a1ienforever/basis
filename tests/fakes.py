@@ -5,7 +5,7 @@ from uuid import UUID
 
 from src.application.dto import MessageDTO
 from src.application.exceptions import InboxMessageAlreadyExistsError
-from src.application.interfaces import UnitOfWork
+from src.application.interfaces import PaymentGateway, UnitOfWork, WebhookSender
 from src.domain.entities import Payment
 from src.domain.exceptions import PaymentAlreadyExistsError
 from src.domain.value_objects import IdempotencyKey
@@ -63,6 +63,14 @@ class FakePaymentRepository:
         saved = replace(payment, created_at=datetime.now(UTC))
         self.payments[saved.idempotency_key] = saved
         return saved
+
+    async def update(self, payment: Payment) -> None:
+        """Сохранить изменения платежа.
+
+        Args:
+            payment: платёж с изменёнными данными.
+        """
+        self.payments[payment.idempotency_key] = payment
 
 
 class FakeOutboxRepository:
@@ -233,3 +241,65 @@ class FakeOutboxPublisher:
         if self.errors:
             raise self.errors.pop(0)
         self.published.append((message_id, routing_key, payload))
+
+
+class FakePaymentGateway(PaymentGateway):
+    """Платёжный шлюз для тестов: возвращает заданный результат без задержки.
+
+    Attributes:
+        success: результат проведения платежей.
+        charged: идентификаторы проведённых платежей в порядке вызовов.
+    """
+
+    def __init__(self, success: bool = True) -> None:
+        """Инициализация шлюза.
+
+        Args:
+            success: результат проведения платежей.
+        """
+        self.success = success
+        self.charged: list[UUID] = []
+
+    async def charge(self, payment: Payment) -> bool:
+        """Запомнить платёж и вернуть заданный результат.
+
+        Args:
+            payment: платёж, ожидающий обработки.
+
+        Returns:
+            Заданный результат проведения платежа.
+        """
+        self.charged.append(payment.id)
+        return self.success
+
+
+class FakeWebhookSender(WebhookSender):
+    """Отправитель webhook для тестов: накапливает уведомления и возбуждает заданные ошибки.
+
+    Attributes:
+        sent: доставленные уведомления в порядке отправки.
+        errors: ошибки, возбуждаемые по одной на каждый следующий вызов.
+        calls: число вызовов, включая неудачные.
+    """
+
+    def __init__(self, errors: list[Exception] | None = None) -> None:
+        """Инициализация отправителя.
+
+        Args:
+            errors: ошибки, возбуждаемые по одной на каждый следующий вызов.
+        """
+        self.sent: list[tuple[str, dict[str, Any]]] = []
+        self.errors = list(errors or [])
+        self.calls = 0
+
+    async def send(self, url: str, payload: dict[str, Any]) -> None:
+        """Сохранить уведомление либо возбудить очередную заданную ошибку.
+
+        Args:
+            url: адрес получателя уведомления.
+            payload: тело уведомления.
+        """
+        self.calls += 1
+        if self.errors:
+            raise self.errors.pop(0)
+        self.sent.append((url, payload))

@@ -32,6 +32,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield
         finally:
             await container.broker.stop()
+            await container.http_client.aclose()
             await container.engine.dispose()
 
     app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)

@@ -68,3 +68,12 @@ class SQLAlchemyPaymentRepository:
             raise PaymentAlreadyExistsError(payment.idempotency_key) from exc
         await self._session.refresh(model)
         return model.to_entity()
+
+    async def update(self, payment: Payment) -> None:
+        """Сохранить изменения существующего платежа в рамках текущей транзакции.
+
+        Args:
+            payment: платёж с изменёнными данными.
+        """
+        await self._session.merge(PaymentModel.from_entity(payment))
+        await self._session.flush()

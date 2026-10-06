@@ -122,6 +122,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "fastapi" },
     { name = "faststream", extra = ["rabbit"] },
+    { name = "httpx" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
@@ -129,7 +130,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -141,6 +141,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.31" },
     { name = "fastapi", specifier = ">=0.142" },
     { name = "faststream", extras = ["rabbit"], specifier = ">=0.7.7" },
+    { name = "httpx", specifier = ">=0.28" },
     { name = "pydantic-settings", specifier = ">=2.15" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
@@ -148,7 +149,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.28" },
     { name = "pytest", specifier = ">=9.1" },
     { name = "pytest-asyncio", specifier = ">=1.4" },
     { name = "ruff", specifier = ">=0.16" },
