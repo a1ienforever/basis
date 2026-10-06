@@ -35,17 +35,30 @@ def create_app(settings: Settings | None = None) -> FastStream:
 
 
 def setup_lifecycle(app: FastStream, container: Container) -> None:
-    """Подключить к broker-app объявление топологии на старте и освобождение ресурсов.
+    """Подключить к broker-app объявление топологии, запуск relay и освобождение ресурсов.
 
     Args:
         app: приложение FastStream.
         container: контейнер зависимостей приложения.
     """
 
+    relay_tasks: list[asyncio.Task[None]] = []
+
     @app.after_startup
     async def declare_payments_topology() -> None:
         """Объявить exchange и очереди платежей после подключения брокера."""
         await declare_topology(container.broker, container.topology)
+
+    @app.after_startup
+    async def start_outbox_relay() -> None:
+        """Запустить relay сообщений outbox фоновой задачей."""
+        relay_tasks.append(asyncio.create_task(container.relay.run()))
+
+    @app.on_shutdown
+    async def stop_outbox_relay() -> None:
+        """Остановить relay и дождаться завершения текущей пачки до закрытия брокера."""
+        container.relay.stop()
+        await asyncio.gather(*relay_tasks)
 
     @app.after_shutdown
     async def dispose_engine() -> None:

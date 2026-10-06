@@ -17,3 +17,11 @@ class DatabaseRepositoryNotFoundError(InfrastructureError):
         """
         super().__init__(f"Repository '{name}' is not registered in the unit of work")
         self.name = name
+
+
+class BrokerUnavailableError(InfrastructureError):
+    """Брокер сообщений недоступен или не подтвердил приём сообщения."""
+
+
+class EventPublishError(InfrastructureError):
+    """Сообщение не может быть опубликовано. Ошибка сообщения."""

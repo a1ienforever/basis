@@ -8,6 +8,7 @@ from src.application.interfaces import UnitOfWork
 from src.domain.entities import Payment
 from src.domain.exceptions import PaymentAlreadyExistsError
 from src.domain.value_objects import IdempotencyKey
+from src.infrastructure.database.models import OutboxMessageModel, OutboxStatus
 
 
 class FakePaymentRepository:
@@ -57,11 +58,13 @@ class FakeOutboxRepository:
 
     Attributes:
         messages: сохранённые сообщения с идентификаторами их агрегатов и очередями.
+        rows: строки outbox, из которых relay выбирает ожидающие отправки.
     """
 
     def __init__(self) -> None:
         """Инициализация репозитория."""
         self.messages: list[tuple[UUID, str, MessageDTO]] = []
+        self.rows: list[OutboxMessageModel] = []
 
     async def add(self, aggregate_id: UUID, queue: str, message: MessageDTO) -> None:
         """Сохранить сообщение в памяти.
@@ -72,6 +75,17 @@ class FakeOutboxRepository:
             message: сообщение для отправки.
         """
         self.messages.append((aggregate_id, queue, message))
+
+    async def lock_pending(self, limit: int) -> list[OutboxMessageModel]:
+        """Вернуть ожидающие отправки строки.
+
+        Args:
+            limit: максимальное число строк.
+
+        Returns:
+            Строки в статусе `pending` в порядке добавления.
+        """
+        return [row for row in self.rows if row.status is OutboxStatus.PENDING][:limit]
 
 
 class FakeUnitOfWork(UnitOfWork):
@@ -148,3 +162,33 @@ class FakeEventPublisher:
             message: сообщение для публикации.
         """
         self.messages.append(message)
+
+
+class FakeOutboxPublisher:
+    """Издатель outbox для тестов: накапливает сообщения и возбуждает заданные ошибки.
+
+    Attributes:
+        published: опубликованные сообщения в порядке публикации.
+        errors: ошибки, возбуждаемые по одной на каждый следующий вызов.
+    """
+
+    def __init__(self, errors: list[Exception] | None = None) -> None:
+        """Инициализация издателя.
+
+        Args:
+            errors: ошибки, возбуждаемые по одной на каждый следующий вызов.
+        """
+        self.published: list[tuple[UUID, str, dict[str, Any]]] = []
+        self.errors = list(errors or [])
+
+    async def publish(self, message_id: UUID, routing_key: str, payload: dict[str, Any]) -> None:
+        """Сохранить сообщение либо возбудить очередную заданную ошибку.
+
+        Args:
+            message_id: идентификатор сообщения.
+            routing_key: ключ маршрутизации сообщения.
+            payload: тело сообщения.
+        """
+        if self.errors:
+            raise self.errors.pop(0)
+        self.published.append((message_id, routing_key, payload))

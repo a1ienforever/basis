@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Enum, String, Text, Uuid, func
+from sqlalchemy import DateTime, Enum, Index, String, Text, Uuid, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -42,6 +42,9 @@ class OutboxMessageModel(Base):
     """
 
     __tablename__ = "outbox"
+    __table_args__ = (
+        Index("ix_outbox_pending", "created_at", postgresql_where=text("status = 'pending'")),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     aggregate_id: Mapped[UUID] = mapped_column(Uuid)

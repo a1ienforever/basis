@@ -3,6 +3,7 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.config.log import LogSettings
+from src.config.outbox import OutboxSettings
 from src.config.postgres import PostgresSettings
 from src.config.rabbit import RabbitSettings
 
@@ -15,12 +16,14 @@ class Settings(BaseSettings):
         debug: режим отладки.
         postgres: настройки подключения к PostgreSQL.
         rabbit: настройки подключения к RabbitMQ.
+        outbox: настройки relay сообщений outbox.
         log: настройки логирования.
     """
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_nested_delimiter="_",
+        env_nested_max_split=1,
         extra="ignore",
     )
 
@@ -28,6 +31,7 @@ class Settings(BaseSettings):
     debug: bool = False
     postgres: PostgresSettings = PostgresSettings()
     rabbit: RabbitSettings = RabbitSettings()
+    outbox: OutboxSettings = OutboxSettings()
     log: LogSettings = LogSettings()
 
 
