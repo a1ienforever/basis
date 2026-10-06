@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src.config import Settings, get_settings
 from src.container import create_container
 from src.infrastructure.logging import setup_logging
+from src.infrastructure.messaging.queues import declare_topology
 from src.presentation.http.api import setup_routers
 from src.presentation.http.api.exception_handlers import register_exception_handlers
 
@@ -24,9 +25,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        """Запустить брокер на старте и освободить ресурсы при остановке."""
+        """Запустить брокер и объявить топологию на старте, освободить ресурсы при остановке."""
         await container.broker.start()
         try:
+            await declare_topology(container.broker, container.topology)
             yield
         finally:
             await container.broker.stop()

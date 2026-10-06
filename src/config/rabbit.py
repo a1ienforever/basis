@@ -12,6 +12,9 @@ class RabbitSettings(BaseModel):
         user: имя пользователя.
         password: пароль пользователя.
         vhost: виртуальный хост.
+        exchange: имя exchange платежей.
+        queue: имя очереди новых платежей.
+        dlq: имя очереди «мёртвых» платежей.
     """
 
     host: str = "localhost"
@@ -19,6 +22,9 @@ class RabbitSettings(BaseModel):
     user: str = "guest"
     password: str = "guest"
     vhost: str = "/"
+    exchange: str = "payments"
+    queue: str = "payments.new"
+    dlq: str = "payments.dlq"
 
     @property
     def url(self) -> str:
