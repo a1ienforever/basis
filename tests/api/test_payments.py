@@ -48,7 +48,6 @@ async def test_get_payment_returns_details(client: AsyncClient) -> None:
         "description": "Оплата заказа №42",
         "metadata": {"order_id": 42},
         "status": "pending",
-        "idempotency_key": "order-42",
         "webhook_url": "https://example.com/hook",
         "created_at": created["created_at"],
         "processed_at": None,

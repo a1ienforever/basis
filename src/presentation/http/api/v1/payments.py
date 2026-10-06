@@ -74,7 +74,6 @@ async def get_payment(
         description=payment.description,
         metadata=payment.metadata,
         status=payment.status,
-        idempotency_key=payment.idempotency_key,
         webhook_url=payment.webhook_url,
         created_at=payment.created_at,
         processed_at=payment.processed_at,

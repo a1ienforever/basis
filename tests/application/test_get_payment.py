@@ -37,7 +37,6 @@ async def test_returns_payment_details(uow: FakeUnitOfWork) -> None:
     assert result.description == "Оплата заказа №42"
     assert result.metadata == {"order_id": 42}
     assert result.status is PaymentStatus.PENDING
-    assert result.idempotency_key == "order-42"
     assert result.webhook_url == "https://example.com/hook"
     assert result.created_at == payment.created_at
     assert result.processed_at is None
