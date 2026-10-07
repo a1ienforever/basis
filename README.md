@@ -8,7 +8,7 @@ uv sync
 docker compose up -d postgres rabbitmq
 make migrate
 make run            # HTTP: http://localhost:8000/docs
-make run-broker     # подписчики RabbitMQ (отдельный процесс)
+make run-broker     # consumer: подписчик RabbitMQ и relay outbox (отдельный процесс)
 ```
 
 ## Запуск в Docker
@@ -23,9 +23,9 @@ make down
 Образ собирается через `pip` из `requirements.txt`. Файл генерируется из `uv.lock`:
 после изменения зависимостей его нужно обновить командой `make requirements`.
 
-Сервисы: `postgres`, `rabbitmq`, `migrate` (разово применяет миграции), `api`, `broker`.
+Сервисы: `postgres`, `rabbitmq`, `migrate` (разово применяет миграции), `api`, `consumer`.
 Имя compose-проекта, образа и контейнеров задаёт `APP_NAME` из `.env`:
-`<APP_NAME>-api`, `<APP_NAME>-broker`, `<APP_NAME>-migrate`, `<APP_NAME>-postgres`, `<APP_NAME>-rabbitmq`.
+`<APP_NAME>-api`, `<APP_NAME>-consumer`, `<APP_NAME>-migrate`, `<APP_NAME>-postgres`, `<APP_NAME>-rabbitmq`.
 Порты на хосте — `HTTP_PORT`, `POSTGRES_PORT`, `RABBIT_PORT`, `RABBIT_MANAGEMENT_PORT`.
 
 ## Аутентификация
@@ -99,7 +99,7 @@ curl -s localhost:8000/api/v1/payments/0b4e0e5e-2f6a-4c0a-9f7e-6a1b2c3d4e5f \
 
 ### Webhook-уведомление
 
-После обработки платежа `broker` отправляет `POST` на `webhook_url` с телом:
+После обработки платежа `consumer` отправляет `POST` на `webhook_url` с телом:
 
 ```json
 {
@@ -113,13 +113,25 @@ curl -s localhost:8000/api/v1/payments/0b4e0e5e-2f6a-4c0a-9f7e-6a1b2c3d4e5f \
 }
 ```
 
-Получателя для проверки можно поднять одной командой:
+Получателя для проверки можно поднять одной командой — он печатает тело запроса и отвечает `200`
+(подойдёт и любой другой приёмник, отвечающий 2xx; `python -m http.server` не годится: на `POST`
+он отвечает `501`):
 
 ```bash
-python -m http.server 9000     # или любой приёмник, отвечающий 2xx
+python3 -c '
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        print(self.rfile.read(int(self.headers.get("Content-Length", 0))).decode(), flush=True)
+        self.send_response(200)
+        self.end_headers()
+
+HTTPServer(("0.0.0.0", 9000), Handler).serve_forever()
+'
 ```
 
-Из контейнера `broker` сервис на хосте доступен как `http://host.docker.internal:9000`.
+Из контейнера `consumer` сервис на хосте доступен как `http://host.docker.internal:9000`.
 
 ### Коды ошибок
 
@@ -135,7 +147,7 @@ python -m http.server 9000     # или любой приёмник, отвеч�
 
 ## Обработка платежей
 
-Процесс `broker` читает очередь `RABBIT_QUEUE`: проводит платёж через эмулятор шлюза
+Процесс `consumer` читает очередь `RABBIT_QUEUE`: проводит платёж через эмулятор шлюза
 (`GATEWAY_*`: задержка 2–5 с, 90% успеха), сохраняет статус и отправляет webhook на `webhook_url`.
 Запрос к шлюзу уходит с заголовком `Idempotency-Key` платежа — тем же, с которым платёж пришёл
 от клиента, чтобы шлюз мог отбросить повторный запрос и не списать средства заново.
