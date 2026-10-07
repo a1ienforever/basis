@@ -117,15 +117,21 @@ class ProcessPaymentUseCase:
             PaymentNotFoundError: платежа с таким идентификатором нет.
         """
         async with self._uow as uow:
+            payment = await self._get(uow, payment_id)
+
+        if payment.status is not PaymentStatus.PENDING:
+            return payment
+
+        succeeded = await self._gateway.charge(payment)
+
+        async with self._uow as uow:
             payments: PaymentRepository = uow.repository("payments")
 
             is_new = await self._inbox.register(uow, self.CONSUMER, message_id)
-            payment = await payments.get_by_id(payment_id)
-            if payment is None:
-                raise PaymentNotFoundError(payment_id)
+            payment = await self._get(uow, payment_id)
 
             if is_new and payment.status is PaymentStatus.PENDING:
-                if await self._gateway.charge(payment):
+                if succeeded:
                     payment.mark_succeeded()
                 else:
                     payment.mark_failed()
@@ -133,6 +139,26 @@ class ProcessPaymentUseCase:
                 logger.info("Платёж %s обработан со статусом %s", payment.id, payment.status)
 
             return payment
+
+    @staticmethod
+    async def _get(uow: UnitOfWork, payment_id: UUID) -> Payment:
+        """Получить платёж в рамках открытой единицы работы.
+
+        Args:
+            uow: открытый Unit of Work с репозиторием `payments`.
+            payment_id: идентификатор платежа.
+
+        Returns:
+            Найденный платёж.
+
+        Raises:
+            PaymentNotFoundError: платежа с таким идентификатором нет.
+        """
+        payments: PaymentRepository = uow.repository("payments")
+        payment = await payments.get_by_id(payment_id)
+        if payment is None:
+            raise PaymentNotFoundError(payment_id)
+        return payment
 
     @staticmethod
     def _to_payload(payment: Payment) -> dict[str, Any]:

@@ -82,6 +82,23 @@ async def test_declined_charge_marks_payment_failed_and_sends_webhook(
     assert [payload["status"] for _, payload in webhooks.sent] == ["failed"]
 
 
+async def test_gateway_is_called_outside_transaction(uow: FakeUnitOfWork) -> None:
+    payment = await add_payment(uow)
+    active_during_charge: list[bool] = []
+
+    class ObservingGateway(FakePaymentGateway):
+        async def charge(self, payment: Payment) -> bool:
+            active_during_charge.append(uow.active)
+            return await super().charge(payment)
+
+    await ProcessPaymentUseCase(uow, ObservingGateway(), FakeWebhookSender(), SETTINGS).execute(
+        uuid4(), payment.id
+    )
+
+    assert active_during_charge == [False]
+    assert payment.status is PaymentStatus.SUCCEEDED
+
+
 async def test_webhook_is_retried_without_charging_again(uow: FakeUnitOfWork) -> None:
     payment = await add_payment(uow)
     gateway = FakePaymentGateway()

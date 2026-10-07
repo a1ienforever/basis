@@ -143,6 +143,7 @@ class FakeUnitOfWork(UnitOfWork):
     Attributes:
         repositories: репозитории, доступные по имени.
         committed: был ли вызван коммит.
+        active: открыт ли контекст UoW в данный момент.
     """
 
     def __init__(self, repositories: dict[str, Any] | None = None) -> None:
@@ -153,6 +154,7 @@ class FakeUnitOfWork(UnitOfWork):
         """
         self.repositories = repositories or {}
         self.committed = False
+        self.active = False
 
     async def __aenter__(self) -> Self:
         """Войти в контекст.
@@ -160,6 +162,7 @@ class FakeUnitOfWork(UnitOfWork):
         Returns:
             Текущий экземпляр UoW.
         """
+        self.active = True
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -170,6 +173,7 @@ class FakeUnitOfWork(UnitOfWork):
             exc_val: экземпляр исключения, если оно возникло в контексте.
             exc_tb: трассировка исключения, если оно возникло в контексте.
         """
+        self.active = False
         if exc_type is None:
             await self.commit()
 
@@ -191,26 +195,6 @@ class FakeUnitOfWork(UnitOfWork):
             Экземпляр репозитория.
         """
         return self.repositories[name]
-
-
-class FakeEventPublisher:
-    """Издатель событий для тестов: накапливает сообщения в памяти.
-
-    Attributes:
-        messages: опубликованные сообщения в порядке публикации.
-    """
-
-    def __init__(self) -> None:
-        """Инициализация издателя."""
-        self.messages: list[MessageDTO] = []
-
-    async def publish(self, message: MessageDTO) -> None:
-        """Сохранить сообщение в списке опубликованных.
-
-        Args:
-            message: сообщение для публикации.
-        """
-        self.messages.append(message)
 
 
 class FakeOutboxPublisher:

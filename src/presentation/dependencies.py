@@ -1,9 +1,4 @@
-from src.application.interfaces import (
-    EventPublisher,
-    PaymentGateway,
-    UnitOfWork,
-    WebhookSender,
-)
+from src.application.interfaces import PaymentGateway, UnitOfWork, WebhookSender
 
 
 def get_uow() -> UnitOfWork:
@@ -11,18 +6,6 @@ def get_uow() -> UnitOfWork:
 
     Returns:
         Экземпляр Unit of Work.
-
-    Raises:
-        NotImplementedError: зависимость не переопределена.
-    """
-    raise NotImplementedError
-
-
-def get_event_publisher() -> EventPublisher:
-    """Заглушка зависимости издателя событий; реализация подставляется контейнером.
-
-    Returns:
-        Издатель событий.
 
     Raises:
         NotImplementedError: зависимость не переопределена.

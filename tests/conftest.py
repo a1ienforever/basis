@@ -8,7 +8,6 @@ from src.config import AuthSettings, get_settings
 from src.presentation import dependencies as deps
 from src.web_server import create_app
 from tests.fakes import (
-    FakeEventPublisher,
     FakeInboxRepository,
     FakeOutboxRepository,
     FakePaymentRepository,
@@ -31,20 +30,13 @@ def uow() -> FakeUnitOfWork:
 
 
 @pytest.fixture
-def publisher() -> FakeEventPublisher:
-    """In-memory издатель событий."""
-    return FakeEventPublisher()
-
-
-@pytest.fixture
-def app(uow: FakeUnitOfWork, publisher: FakeEventPublisher) -> FastAPI:
+def app(uow: FakeUnitOfWork) -> FastAPI:
     """Реальное приложение с инфраструктурой, заменённой in-memory фейками."""
     app = create_app()
     settings = get_settings().model_copy(update={"auth": AuthSettings(api_key=TEST_API_KEY)})
     app.dependency_overrides.update(
         {
             deps.get_uow: lambda: uow,
-            deps.get_event_publisher: lambda: publisher,
             get_settings: lambda: settings,
         }
     )

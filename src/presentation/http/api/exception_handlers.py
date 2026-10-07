@@ -12,8 +12,6 @@ STATUS_CODES: dict[type[DomainError], int] = {
 async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:
     """Преобразовать доменную ошибку в HTTP-ответ.
 
-    Код ответа берётся из `STATUS_CODES`, по умолчанию — 400.
-
     Args:
         request: входящий HTTP-запрос.
         exc: доменная ошибка.

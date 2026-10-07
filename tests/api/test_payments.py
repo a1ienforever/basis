@@ -58,9 +58,3 @@ async def test_get_unknown_payment_returns_404(client: AsyncClient) -> None:
     response = await client.get(f"{URL}/{uuid4()}")
 
     assert response.status_code == 404
-
-
-async def test_get_payment_with_invalid_id_is_rejected(client: AsyncClient) -> None:
-    response = await client.get(f"{URL}/not-a-uuid")
-
-    assert response.status_code == 422

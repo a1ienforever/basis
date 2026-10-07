@@ -21,9 +21,6 @@ class SQLAlchemyInboxRepository:
     async def create(self, consumer: str, message_id: UUID) -> None:
         """Сохранить сообщение в inbox в рамках текущей транзакции.
 
-        Вставка выполняется в savepoint, поэтому дубликат не обрывает
-        внешнюю транзакцию.
-
         Args:
             consumer: имя потребителя, обработавшего сообщение.
             message_id: идентификатор сообщения в outbox отправителя.

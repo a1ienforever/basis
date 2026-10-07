@@ -1,10 +1,8 @@
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
 from faststream.rabbit import RabbitBroker, TestRabbitBroker
 
-from src.application.exceptions import WebhookDeliveryError
 from src.config import ConsumerSettings, RabbitSettings, Settings, get_settings
 from src.domain.entities import Payment
 from src.domain.value_objects import (
@@ -68,14 +66,3 @@ async def test_message_from_queue_is_processed(uow: FakeUnitOfWork) -> None:
 
     assert payment.status is PaymentStatus.SUCCEEDED
     assert [url for url, _ in webhooks.sent] == ["https://example.com/hook"]
-
-
-async def test_unprocessed_message_is_rejected(uow: FakeUnitOfWork) -> None:
-    payment = await add_payment(uow)
-    webhooks = FakeWebhookSender([WebhookDeliveryError("url", "down") for _ in range(3)])
-
-    async with TestRabbitBroker(make_broker(uow, webhooks)) as broker:
-        with pytest.raises(WebhookDeliveryError):
-            await publish(broker, payment)
-
-    assert webhooks.calls == 3

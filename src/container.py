@@ -6,19 +6,13 @@ import httpx
 from faststream.rabbit import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from src.application.interfaces import (
-    EventPublisher,
-    PaymentGateway,
-    UnitOfWork,
-    WebhookSender,
-)
+from src.application.interfaces import PaymentGateway, UnitOfWork, WebhookSender
 from src.config import Settings
 from src.infrastructure.database.session import create_engine, create_session_factory
 from src.infrastructure.database.uow import AppUnitOfWork
 from src.infrastructure.messaging.broker import create_broker
 from src.infrastructure.messaging.outbox_publisher import RabbitOutboxPublisher
 from src.infrastructure.messaging.outbox_relay import OutboxRelay
-from src.infrastructure.messaging.publisher import RabbitEventPublisher
 from src.infrastructure.messaging.queues import PaymentsTopology, create_topology
 from src.infrastructure.payments.gateway import EmulatedPaymentGateway
 from src.infrastructure.webhooks.sender import HttpxWebhookSender
@@ -60,7 +54,6 @@ def create_container(settings: Settings) -> Container:
 
     broker = create_broker(settings.rabbit)
     topology = create_topology(settings.rabbit)
-    publisher = RabbitEventPublisher(broker, topology.exchange)
 
     http_client = httpx.AsyncClient(timeout=settings.consumer.webhook_timeout)
     gateway = EmulatedPaymentGateway(settings.gateway)
@@ -69,10 +62,6 @@ def create_container(settings: Settings) -> Container:
     def get_uow() -> UnitOfWork:
         """Создать новый UoW на общей фабрике сессий."""
         return AppUnitOfWork(session_factory)
-
-    def get_event_publisher() -> EventPublisher:
-        """Вернуть общий издатель событий."""
-        return publisher
 
     def get_payment_gateway() -> PaymentGateway:
         """Вернуть общий платёжный шлюз."""
@@ -92,7 +81,6 @@ def create_container(settings: Settings) -> Container:
 
     providers: dict[Callable[..., Any], Callable[..., Any]] = {
         deps.get_uow: get_uow,
-        deps.get_event_publisher: get_event_publisher,
         deps.get_payment_gateway: get_payment_gateway,
         deps.get_webhook_sender: get_webhook_sender,
     }

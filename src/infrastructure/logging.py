@@ -2,7 +2,6 @@ from logging.config import dictConfig
 
 from src.config import LogSettings
 
-# Логгеры со своими обработчиками и форматтерами; перенаправляются в корневой обработчик.
 THIRD_PARTY_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access", "sqlalchemy.engine", "alembic")
 
 

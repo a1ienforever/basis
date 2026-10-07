@@ -26,9 +26,6 @@ async def create_payment(
 ) -> CreatePaymentResponse:
     """Принять платёж в обработку.
 
-    Повторный запрос с тем же ключом идемпотентности возвращает уже
-    созданный платёж.
-
     Args:
         body: данные платежа.
         idempotency_key: ключ идемпотентности из заголовка `Idempotency-Key`.
