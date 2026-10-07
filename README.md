@@ -20,6 +20,9 @@ make logs
 make down
 ```
 
+Образ собирается через `pip` из `requirements.txt`. Файл генерируется из `uv.lock`:
+после изменения зависимостей его нужно обновить командой `make requirements`.
+
 Сервисы: `postgres`, `rabbitmq`, `migrate` (разово применяет миграции), `api`, `broker`.
 Имя compose-проекта, образа и контейнеров задаёт `APP_NAME` из `.env`:
 `<APP_NAME>-api`, `<APP_NAME>-broker`, `<APP_NAME>-migrate`, `<APP_NAME>-postgres`, `<APP_NAME>-rabbitmq`.

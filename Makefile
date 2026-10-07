@@ -1,6 +1,6 @@
 ALEMBIC = uv run alembic -c src/infrastructure/database/alembic/alembic.ini
 
-.PHONY: up down logs run run-broker migrate downgrade revision test lint format
+.PHONY: up down logs run run-broker migrate downgrade revision requirements test lint format
 
 up:
 	docker compose up --build -d
@@ -26,6 +26,10 @@ downgrade:
 # make revision m="add something"
 revision:
 	$(ALEMBIC) revision --autogenerate -m "$(m)"
+
+# обновить requirements.txt для сборки образа после изменения зависимостей
+requirements:
+	uv export --frozen --no-dev --no-hashes --no-emit-project --no-annotate -o requirements.txt
 
 test:
 	uv run pytest
