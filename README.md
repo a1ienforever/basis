@@ -23,11 +23,6 @@ make down
 Образ собирается через `pip` из `requirements.txt`. Файл генерируется из `uv.lock`:
 после изменения зависимостей его нужно обновить командой `make requirements`.
 
-Сервисы: `postgres`, `rabbitmq`, `migrate` (разово применяет миграции), `api`, `consumer`.
-Имя compose-проекта, образа и контейнеров задаёт `APP_NAME` из `.env`:
-`<APP_NAME>-api`, `<APP_NAME>-consumer`, `<APP_NAME>-migrate`, `<APP_NAME>-postgres`, `<APP_NAME>-rabbitmq`.
-Порты на хосте — `HTTP_PORT`, `POSTGRES_PORT`, `RABBIT_PORT`, `RABBIT_MANAGEMENT_PORT`.
-
 ## Аутентификация
 
 Все эндпоинты `/api/v1/*` требуют статический ключ из `AUTH_API_KEY` в заголовке `X-API-Key`;
@@ -114,8 +109,7 @@ curl -s localhost:8000/api/v1/payments/0b4e0e5e-2f6a-4c0a-9f7e-6a1b2c3d4e5f \
 ```
 
 Получателя для проверки можно поднять одной командой — он печатает тело запроса и отвечает `200`
-(подойдёт и любой другой приёмник, отвечающий 2xx; `python -m http.server` не годится: на `POST`
-он отвечает `501`):
+(подойдёт и любой другой приёмник, отвечающий 2xx:
 
 ```bash
 python3 -c '
